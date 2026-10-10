@@ -26,6 +26,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const settingsModal = document.getElementById("settings-modal");
   const saveSettingsBtn = document.getElementById("save-settings-btn");
   const apiKeyInput = document.getElementById("api-key-input");
+  const toggleKeyVisibilityBtn = document.getElementById("toggle-key-visibility-btn");
   const modelSelect = document.getElementById("model-select");
   const systemPromptInput = document.getElementById("system-prompt-input");
   const tempSlider = document.getElementById("temperature-slider");
@@ -34,6 +35,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const toppVal = document.getElementById("topp-val");
   const currentModelTag = document.getElementById("current-model-tag");
 
+  const apiKeyPillBtn = document.getElementById("api-key-pill-btn");
+  const apiStatusDot = document.getElementById("api-status-dot");
+  const apiStatusText = document.getElementById("api-status-text");
+
   const openInfoBtn = document.getElementById("open-info-btn");
   const closeInfoBtn = document.getElementById("close-info-btn");
   const infoModal = document.getElementById("info-modal");
@@ -41,15 +46,57 @@ document.addEventListener("DOMContentLoaded", () => {
   // State in LocalStorage for client portal
   let sessions = JSON.parse(localStorage.getItem("nexus_sessions") || "[]");
   let currentSessionId = localStorage.getItem("nexus_current_session_id") || null;
-  let userApiKey = localStorage.getItem("nexus_user_api_key") || "";
+  let userApiKey = (localStorage.getItem("nexus_user_api_key") || "").trim();
   let attachedBase64 = null;
   let attachedMime = null;
   let attachedFileName = null;
   let isGenerating = false;
   let currentModel = localStorage.getItem("nexus_model") || "gemini-3.5-flash";
 
-  if (apiKeyInput && userApiKey) {
-    apiKeyInput.value = userApiKey;
+  function updateApiKeyStatusUI() {
+    if (userApiKey) {
+      if (apiStatusDot) {
+        apiStatusDot.style.background = "#10b981";
+        apiStatusDot.style.boxShadow = "0 0 8px #10b981";
+      }
+      if (apiStatusText) {
+        apiStatusText.textContent = "API Key Active";
+        apiStatusText.style.color = "#a7f3d0";
+      }
+      if (apiKeyInput) {
+        apiKeyInput.value = userApiKey;
+      }
+    } else {
+      if (apiStatusDot) {
+        apiStatusDot.style.background = "#eab308";
+        apiStatusDot.style.boxShadow = "0 0 8px #eab308";
+      }
+      if (apiStatusText) {
+        apiStatusText.textContent = "Click to Add API Key";
+        apiStatusText.style.color = "#fef08a";
+      }
+    }
+  }
+
+  updateApiKeyStatusUI();
+
+  if (apiKeyPillBtn) {
+    apiKeyPillBtn.addEventListener("click", () => {
+      settingsModal.style.display = "flex";
+      if (apiKeyInput) apiKeyInput.focus();
+    });
+  }
+
+  if (toggleKeyVisibilityBtn) {
+    toggleKeyVisibilityBtn.addEventListener("click", () => {
+      if (apiKeyInput.type === "password") {
+        apiKeyInput.type = "text";
+        toggleKeyVisibilityBtn.textContent = "Hide Key";
+      } else {
+        apiKeyInput.type = "password";
+        toggleKeyVisibilityBtn.textContent = "Show Key";
+      }
+    });
   }
 
   // Configure marked.js
@@ -101,6 +148,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Modals
   openSettingsBtn.addEventListener("click", () => {
     settingsModal.style.display = "flex";
+    if (apiKeyInput) apiKeyInput.focus();
   });
   closeSettingsBtn.addEventListener("click", () => {
     settingsModal.style.display = "none";
@@ -118,9 +166,11 @@ document.addEventListener("DOMContentLoaded", () => {
     localStorage.setItem("nexus_model", currentModel);
     currentModelTag.textContent = currentModel === "gemini-3.8-flash" ? "Nexus Ultra 3.8" : "v3.5 Flash Engine";
     
-    if (apiKeyInput.value.trim()) {
-      userApiKey = apiKeyInput.value.trim();
+    const inputKey = apiKeyInput.value.trim();
+    if (inputKey) {
+      userApiKey = inputKey;
       localStorage.setItem("nexus_user_api_key", userApiKey);
+      updateApiKeyStatusUI();
     }
     settingsModal.style.display = "none";
   });
@@ -295,7 +345,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (role === "user") {
       bodyDiv.innerHTML = `${imageHtml}<div>${escapeHtml(content)}</div>`;
     } else {
-      bodyDiv.innerHTML = marked.parse(content);
+      bodyDiv.innerHTML = marked.parse(content || "");
       addCopyButtons(bodyDiv);
       renderMath(bodyDiv);
     }
@@ -343,8 +393,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Check API Key
     if (!userApiKey) {
       settingsModal.style.display = "flex";
-      apiKeyInput.focus();
-      alert("Please enter your Google Gemini API Key in the settings modal to enable live inference.");
+      if (apiKeyInput) apiKeyInput.focus();
       return;
     }
 
@@ -366,10 +415,10 @@ document.addEventListener("DOMContentLoaded", () => {
     attachmentPreview.style.display = "none";
     fileInput.value = "";
 
-    // Append to UI
+    // Append user message
     appendMessageUI("user", promptText, curImgBase64 ? curImgSrc : "");
 
-    // Add to session data
+    // Add to session messages
     activeSess.messages.push({
       role: "user",
       content: promptText,
@@ -381,6 +430,7 @@ document.addEventListener("DOMContentLoaded", () => {
       renderSessionsList();
     }
 
+    // Append empty placeholder for model reply
     const modelBody = appendMessageUI("model", "");
     modelBody.classList.add("streaming-cursor");
     isGenerating = true;
@@ -388,7 +438,6 @@ document.addEventListener("DOMContentLoaded", () => {
     let fullResponse = "";
 
     try {
-      // Build Google Gemini REST payload
       const formattedContents = [];
       activeSess.messages.forEach(m => {
         const parts = [];
@@ -432,7 +481,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (!response.ok) {
         const errJson = await response.json().catch(() => ({}));
-        const errMsg = (errJson.error && errJson.error.message) ? errJson.error.message : `HTTP ${response.status}`;
+        const errMsg = (errJson.error && errJson.error.message) ? errJson.error.message : `HTTP ${response.status} Error`;
         throw new Error(errMsg);
       }
 
@@ -479,7 +528,7 @@ document.addEventListener("DOMContentLoaded", () => {
       saveSessions();
 
     } catch (err) {
-      fullResponse += `\n\n*(Error connecting to inference engine: ${err.message})*\n\n*Check your API key in Parameters & Tuning.*`;
+      fullResponse = `**Error communicating with inference engine:**\n\n> ${err.message}\n\nPlease click **"API Key & Parameters"** in the sidebar or top bar to ensure your Google Gemini API key is valid.`;
       modelBody.innerHTML = marked.parse(fullResponse);
     } finally {
       modelBody.classList.remove("streaming-cursor");
