@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NexusAI - Conversational Intelligence Platform</title>
+  <!-- Cyber-Futuristic Favicon -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='%236366f1' d='M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5'/></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <!-- Marked.js for Markdown -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <!-- Highlight.js for Syntax Highlighting -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/tokyo-night-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <!-- KaTeX for Math -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="dark-theme">
+  <!-- Glowing Background Ambient Spheres -->
+  <div class="ambient-glow glow-1"></div>
+  <div class="ambient-glow glow-2"></div>
+
+  <div class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="nexus-brand-wrapper">
+          <div class="nexus-logo-icon">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+          </div>
+          <span class="nexus-brand-text">Nexus<span class="brand-accent">AI</span></span>
+        </div>
+        <button class="icon-btn" id="toggle-sidebar-btn" title="Toggle Sidebar">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h7" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="sidebar-action-wrap">
+        <button class="new-chat-btn" id="new-chat-btn">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+          </svg>
+          <span class="btn-label">New Conversation</span>
+        </button>
+      </div>
+
+      <div class="recent-chats-container">
+        <div class="section-title">
+          <span>Conversations</span>
+          <span class="pulse-indicator"></span>
+        </div>
+        <div class="sessions-list" id="sessions-list">
+          <!-- Dynamic Sessions Injected Here -->
+        </div>
+      </div>
+
+      <div class="sidebar-footer">
+        <button class="sidebar-item" id="open-settings-btn">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          <span class="label">Parameters & Tuning</span>
+        </button>
+        <button class="sidebar-item" id="open-info-btn">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+          </svg>
+          <span class="label">Architecture & Syllabus</span>
+        </button>
+        <div class="user-profile-badge">
+          <div class="user-avatar">AC</div>
+          <div class="user-details">
+            <span class="user-name">Avadhut Chakradeo</span>
+            <span class="user-plan">ISE Project Edition</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Workspace -->
+    <main class="main-content">
+      <!-- Top Navbar -->
+      <header class="top-nav">
+        <div class="nav-left">
+          <button class="mobile-toggle-btn" id="mobile-toggle-btn">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
+            </svg>
+          </button>
+          <div class="app-chip">
+            <span class="status-dot"></span>
+            <span class="status-name">Neural Core Active</span>
+          </div>
+          <span class="model-badge" id="current-model-tag">v3.5 Flash Engine</span>
+        </div>
+        <div class="nav-actions">
+          <button class="theme-toggle-btn" id="theme-toggle-btn" title="Toggle theme">
+            <svg class="sun-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- Chat Feed -->
+      <div class="chat-container" id="chat-container">
+        <!-- Hero / Greeting Screen (Shown when empty chat) -->
+        <div class="hero-screen" id="hero-screen">
+          <div class="hero-badge">
+            <span class="badge-icon">⚡</span>
+            <span>Next-Gen Conversational Transformer</span>
+          </div>
+          <div class="hero-gradient-text">
+            <h1>Welcome, Avadhut</h1>
+            <h2>What should we engineer today?</h2>
+          </div>
+          <div class="starter-cards-grid">
+            <div class="starter-card" data-prompt="Explain the difference between RNNs, LSTMs, and Transformers in Chatbot architectures with diagrammatic workflows.">
+              <div class="card-header">
+                <span class="card-tag">DEEP LEARNING</span>
+                <span class="card-icon">🧠</span>
+              </div>
+              <div class="card-text">Compare Recurrent Nets, LSTMs & Transformers</div>
+            </div>
+            <div class="starter-card" data-prompt="Provide complete Python code implementing Text Preprocessing, TF-IDF feature extraction, and Naive Bayes Intent Classification.">
+              <div class="card-header">
+                <span class="card-tag">NLP PIPELINE</span>
+                <span class="card-icon">💻</span>
+              </div>
+              <div class="card-text">Python Code for NLP Tokenization & Intent Tagging</div>
+            </div>
+            <div class="starter-card" data-prompt="Discuss the key Ethical Considerations, Algorithmic Bias mitigation, and Privacy safeguards in Chatbot deployment.">
+              <div class="card-header">
+                <span class="card-tag">ETHICS & PRIVACY</span>
+                <span class="card-icon">🛡️</span>
+              </div>
+              <div class="card-text">Ethical Frameworks & User Data Protection in AI</div>
+            </div>
+            <div class="starter-card" data-prompt="Break down Multi-Head Self-Attention with Scaled Dot-Product mathematical intuition: Attention(Q, K, V).">
+              <div class="card-header">
+                <span class="card-tag">ATTENTION MATH</span>
+                <span class="card-icon">✨</span>
+              </div>
+              <div class="card-text">Step-by-step Math of Self-Attention Mechanisms</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Message List -->
+        <div class="messages-list" id="messages-list">
+          <!-- Dynamic Messages Injected Here -->
+        </div>
+      </div>
+
+      <!-- Bottom Chat Input Bar -->
+      <div class="input-area-wrapper">
+        <div class="attachment-preview" id="attachment-preview" style="display: none;">
+          <div class="preview-thumbnail">
+            <img id="preview-img" src="" alt="attachment preview" style="display:none;" />
+            <div id="preview-file-icon" class="file-icon" style="display:none;">📄</div>
+            <span id="preview-file-name" class="file-name"></span>
+          </div>
+          <button class="remove-attachment-btn" id="remove-attachment-btn">&times;</button>
+        </div>
+
+        <form class="chat-input-box" id="chat-form">
+          <input type="file" id="file-input" style="display: none;" accept="image/*,.pdf,.txt,.py,.json">
+          <button type="button" class="action-btn" id="attach-btn" title="Attach image or file for multimodal reasoning">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+            </svg>
+          </button>
+
+          <textarea 
+            id="chat-textarea" 
+            placeholder="Type your prompt, ask complex questions, or paste code..." 
+            rows="1" 
+            autofocus
+          ></textarea>
+
+          <button type="submit" class="send-btn" id="send-btn" disabled title="Send message">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </button>
+        </form>
+        <div class="disclaimer-text">
+          NexusAI Intelligent Agent &bull; Powered by Transformer Attention Networks &bull; ISE Course Academic Project
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Settings Modal -->
+  <div class="modal-overlay" id="settings-modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <span class="modal-icon">⚙️</span>
+          <h3>Neural Parameters & System Persona</h3>
+        </div>
+        <button class="modal-close-btn" id="close-settings-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Inference Engine Architecture</label>
+          <select id="model-select">
+            <option value="gemini-3.5-flash" selected>Nexus Flash (Fast, Multimodal, Real-Time SSE)</option>
+            <option value="gemini-3.8-flash">Nexus Ultra 3.8 (Extended Context Window)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>System Persona Conditioning (Affects Conversation Flow & Tone)</label>
+          <textarea id="system-prompt-input" rows="3" placeholder="e.g. You are NexusAI, an academic expert in Natural Language Processing and Deep Learning. Answer questions with rigorous technical depth and pedagogical clarity."></textarea>
+        </div>
+        <div class="form-group">
+          <div class="slider-header">
+            <label>Temperature (Deterministic vs Creative)</label>
+            <span class="slider-badge" id="temp-val">0.7</span>
+          </div>
+          <input type="range" id="temperature-slider" min="0.0" max="2.0" step="0.05" value="0.7">
+        </div>
+        <div class="form-group">
+          <div class="slider-header">
+            <label>Top-P (Nucleus Sampling Probability Cutoff)</label>
+            <span class="slider-badge" id="topp-val">0.95</span>
+          </div>
+          <input type="range" id="topp-slider" min="0.1" max="1.0" step="0.05" value="0.95">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" id="save-settings-btn">Save Parameters</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ISE Project Info Modal -->
+  <div class="modal-overlay" id="info-modal" style="display: none;">
+    <div class="modal-content project-info-modal">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <span class="modal-icon">🎓</span>
+          <h3>NexusAI &bull; ISE Chatbot Academic Mapping</h3>
+        </div>
+        <button class="modal-close-btn" id="close-info-btn">&times;</button>
+      </div>
+      <div class="modal-body info-body">
+        <p class="info-intro">This system was designed and built by <strong>Avadhut Chakradeo</strong> to demonstrate practical implementations of the Information Science & Engineering curriculum topics:</p>
+        <div class="topic-pill-list">
+          <span class="topic-pill">Conversational AI & Client-Server Pipeline</span>
+          <span class="topic-pill">Multi-Turn Context & Session Memory (SQLite)</span>
+          <span class="topic-pill">Natural Language Processing (Tokenization & Embeddings)</span>
+          <span class="topic-pill">Sequence Modeling: RNNs &rarr; LSTMs &rarr; Transformers</span>
+          <span class="topic-pill">Multi-Head Self-Attention In-Context Reasoning</span>
+          <span class="topic-pill">Real-Time Asynchronous Token Streaming (SSE)</span>
+          <span class="topic-pill">Multimodal Vision & Code Analysis</span>
+          <span class="topic-pill">Ethical Safeguards & Data Privacy Isolation</span>
+        </div>
+        <div class="info-details">
+          <strong>Backend:</strong> FastAPI Asynchronous ASGI Server with Server-Sent Events (SSE)<br>
+          <strong>Persistence:</strong> Local SQLite Relational Store with Session Cascade Deletion<br>
+          <strong>Presentation:</strong> Responsive Modern Cyber-Theme with KaTeX Math & Highlight.js
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>

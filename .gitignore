@@ -1,0 +1,19 @@
+# Environment variables
+.env
+*.env
+__pycache__/
+*.pyc
+
+# Database
+*.db
+gemini_chats.db
+
+# User uploads & temporary files
+static/uploads/*
+!static/uploads/.gitkeep
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
