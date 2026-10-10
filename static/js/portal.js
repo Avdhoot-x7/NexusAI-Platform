@@ -43,15 +43,17 @@ document.addEventListener("DOMContentLoaded", () => {
   const closeInfoBtn = document.getElementById("close-info-btn");
   const infoModal = document.getElementById("info-modal");
 
+  const DEFAULT_MODEL = "apodex/apodex-1.1-mini:free";
+
   // State in LocalStorage for client portal
   let sessions = JSON.parse(localStorage.getItem("nexus_sessions") || "[]");
   let currentSessionId = localStorage.getItem("nexus_current_session_id") || null;
-  let userApiKey = (localStorage.getItem("nexus_user_api_key") || "").trim();
+  let userApiKey = (localStorage.getItem("nexus_openrouter_key") || "").trim();
   let attachedBase64 = null;
   let attachedMime = null;
   let attachedFileName = null;
   let isGenerating = false;
-  let currentModel = localStorage.getItem("nexus_model") || "gemini-3.5-flash";
+  let currentModel = localStorage.getItem("nexus_model") || DEFAULT_MODEL;
 
   function updateApiKeyStatusUI() {
     if (userApiKey) {
@@ -60,7 +62,7 @@ document.addEventListener("DOMContentLoaded", () => {
         apiStatusDot.style.boxShadow = "0 0 8px #10b981";
       }
       if (apiStatusText) {
-        apiStatusText.textContent = "API Key Active";
+        apiStatusText.textContent = "OpenRouter Engine Active";
         apiStatusText.style.color = "#a7f3d0";
       }
       if (apiKeyInput) {
@@ -162,14 +164,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Save Settings
   saveSettingsBtn.addEventListener("click", () => {
-    currentModel = modelSelect.value;
+    currentModel = modelSelect.value || DEFAULT_MODEL;
     localStorage.setItem("nexus_model", currentModel);
-    currentModelTag.textContent = currentModel === "gemini-3.8-flash" ? "Nexus Ultra 3.8" : "v3.5 Flash Engine";
+    currentModelTag.textContent = "Apodex 1.1 Mini (Free)";
     
     const inputKey = apiKeyInput.value.trim();
     if (inputKey) {
       userApiKey = inputKey;
-      localStorage.setItem("nexus_user_api_key", userApiKey);
+      localStorage.setItem("nexus_openrouter_key", userApiKey);
       updateApiKeyStatusUI();
     }
     settingsModal.style.display = "none";
@@ -385,12 +387,10 @@ document.addEventListener("DOMContentLoaded", () => {
   async function sendMessage() {
     const promptText = chatTextarea.value.trim();
     const curImgBase64 = attachedBase64;
-    const curImgMime = attachedMime;
     const curImgSrc = previewImg.src;
 
     if (!promptText && !curImgBase64) return;
 
-    // Check API Key
     if (!userApiKey) {
       settingsModal.style.display = "flex";
       if (apiKeyInput) apiKeyInput.focus();
@@ -438,44 +438,41 @@ document.addEventListener("DOMContentLoaded", () => {
     let fullResponse = "";
 
     try {
-      const formattedContents = [];
+      const formattedMessages = [];
+      const sysPrompt = systemPromptInput.value.trim() || "You are NexusAI, an academic and conversational AI tutor specialized in Natural Language Processing, Machine Learning, and Information Science & Engineering.";
+      formattedMessages.push({
+        role: "system",
+        content: sysPrompt
+      });
+
       activeSess.messages.forEach(m => {
-        const parts = [];
-        if (m.image_src && curImgBase64 && m === activeSess.messages[activeSess.messages.length - 1]) {
-          parts.push({
-            inlineData: {
-              mimeType: curImgMime,
-              data: curImgBase64
-            }
-          });
+        let textContent = m.content;
+        if (m.image_src) {
+          textContent += " [User included an attachment]";
         }
-        if (m.content) {
-          parts.push({ text: m.content });
-        }
-        formattedContents.push({
-          role: m.role === "user" ? "user" : "model",
-          parts: parts
+        formattedMessages.push({
+          role: m.role === "user" ? "user" : "assistant",
+          content: textContent
         });
       });
 
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${currentModel}:streamGenerateContent?alt=sse&key=${userApiKey}`;
+      const url = "https://openrouter.ai/api/v1/chat/completions";
       const payload = {
-        contents: formattedContents,
-        generationConfig: {
-          temperature: parseFloat(tempSlider.value),
-          topP: parseFloat(toppSlider.value)
-        }
+        model: currentModel || DEFAULT_MODEL,
+        messages: formattedMessages,
+        temperature: parseFloat(tempSlider.value),
+        top_p: parseFloat(toppSlider.value),
+        stream: true
       };
-
-      if (systemPromptInput.value.trim()) {
-        payload.systemInstruction = {
-          parts: [{ text: systemPromptInput.value.trim() }]
-        };
-      }
 
       const response = await fetch(url, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Authorization": `Bearer ${userApiKey}`,
+          "HTTP-Referer": "https://avdhoot-x7.github.io/NexusAI-Platform/",
+          "X-Title": "NexusAI Platform",
+          "Content-Type": "application/json"
+        },
         body: JSON.stringify(payload)
       });
 
@@ -498,16 +495,12 @@ document.addEventListener("DOMContentLoaded", () => {
         buffer = lines.pop();
 
         for (const line of lines) {
-          if (line.startsWith("data: ")) {
+          if (line.startsWith("data: ") && !line.startsWith("data: [DONE]")) {
             try {
               const chunk = JSON.parse(line.slice(6));
-              const candidates = chunk.candidates || [];
-              if (candidates.length > 0 && candidates[0].content && candidates[0].content.parts) {
-                for (const part of candidates[0].content.parts) {
-                  if (part.text) {
-                    fullResponse += part.text;
-                  }
-                }
+              const choices = chunk.choices || [];
+              if (choices.length > 0 && choices[0].delta && choices[0].delta.content) {
+                fullResponse += choices[0].delta.content;
                 modelBody.innerHTML = marked.parse(fullResponse);
                 addCopyButtons(modelBody);
                 renderMath(modelBody);
@@ -528,7 +521,7 @@ document.addEventListener("DOMContentLoaded", () => {
       saveSessions();
 
     } catch (err) {
-      fullResponse = `**Error communicating with inference engine:**\n\n> ${err.message}\n\nPlease click **"API Key & Parameters"** in the sidebar or top bar to ensure your Google Gemini API key is valid.`;
+      fullResponse = `**Error communicating with OpenRouter engine:**\n\n> ${err.message}\n\nPlease click **"Inference & Model Settings"** to verify your OpenRouter API key.`;
       modelBody.innerHTML = marked.parse(fullResponse);
     } finally {
       modelBody.classList.remove("streaming-cursor");
