@@ -69,7 +69,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
             <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
-          <span class="label">Inference & Model Settings</span>
+          <span class="label">RAG & Model Settings</span>
         </button>
         <button class="sidebar-item" id="open-info-btn">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
@@ -97,11 +97,11 @@
               <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
             </svg>
           </button>
-          <div class="app-chip" id="api-key-pill-btn" style="background: rgba(16, 185, 129, 0.12); cursor: pointer;" title="Active OpenRouter Free Engine">
+          <div class="app-chip" id="api-key-pill-btn" style="background: rgba(16, 185, 129, 0.12); cursor: pointer;" title="Active Vector RAG Grounding">
             <span class="status-dot" id="api-status-dot" style="background: #10b981; box-shadow: 0 0 8px #10b981;"></span>
-            <span class="status-name" id="api-status-text" style="color: #a7f3d0;">Neural Core Ready</span>
+            <span class="status-name" id="api-status-text" style="color: #a7f3d0;">RAG Grounding Active</span>
           </div>
-          <span class="model-badge" id="current-model-tag">Apodex 1.1 Mini (Free)</span>
+          <span class="model-badge" id="current-model-tag">Grounded Theory RAG</span>
         </div>
         <div class="nav-actions">
           <button class="theme-toggle-btn" id="theme-toggle-btn" title="Toggle theme">
@@ -118,7 +118,7 @@
         <div class="hero-screen" id="hero-screen">
           <div class="hero-badge">
             <span class="badge-icon">⚡</span>
-            <span>Next-Gen OpenRouter Transformer Core</span>
+            <span>Retrieval-Augmented Generation (RAG) Core</span>
           </div>
           <div class="hero-gradient-text">
             <h1>Welcome, Avadhut</h1>
@@ -195,7 +195,7 @@
           </button>
         </form>
         <div class="disclaimer-text">
-          NexusAI Intelligent Agent &bull; Powered by Transformer Attention Networks &bull; ISE Course Academic Project
+          NexusAI Intelligent Agent &bull; Grounded by ChromaDB Vector RAG &bull; ISE Course Academic Project
         </div>
       </div>
     </main>
@@ -207,24 +207,24 @@
       <div class="modal-header">
         <div class="modal-title-wrap">
           <span class="modal-icon">⚙️</span>
-          <h3>OpenRouter Engine & Parameters</h3>
+          <h3>RAG Vector Database & Neural Tuning</h3>
         </div>
         <button class="modal-close-btn" id="close-settings-btn">&times;</button>
       </div>
       <div class="modal-body">
-        <div class="form-group" style="background: rgba(99, 102, 241, 0.08); padding: 12px; border-radius: 14px; border: 1px solid rgba(99, 102, 241, 0.25);">
-          <label style="color: #c7d2fe; font-weight: 700;">OpenRouter API Key</label>
-          <input type="password" id="api-key-input" placeholder="sk-or-v1-..." style="margin-top: 6px;" />
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
-            <small style="color: var(--text-muted); font-size: 11px;">Preconfigured with active free OpenRouter key.</small>
-            <button type="button" id="toggle-key-visibility-btn" style="background: transparent; border: none; color: var(--accent-cyan); cursor: pointer; font-size: 11px; font-weight: 600;">Show Key</button>
-          </div>
+        <div class="form-group" style="background: rgba(16, 185, 129, 0.08); padding: 12px; border-radius: 14px; border: 1px solid rgba(16, 185, 129, 0.25);">
+          <label style="color: #a7f3d0; font-weight: 700;">Vector RAG Status: Grounded Knowledge Base Online</label>
+          <small style="color: var(--text-secondary); font-size: 12px; line-height: 1.5; display: block; margin-top: 4px;">
+            NexusAI performs vector semantic search across indexed modules: NLP preprocessing, tokenization, TF-IDF, RNNs/LSTMs, multi-head attention, Transformers, metrics, and ethical safety.
+          </small>
         </div>
         <div class="form-group">
-          <label>Inference Model Architecture</label>
-          <select id="model-select">
-            <option value="apodex/apodex-1.1-mini:free" selected>Apodex 1.1 Mini (Free, Fast Streaming)</option>
-          </select>
+          <label>Optional Cloud API Key (OpenRouter or Gemini)</label>
+          <input type="password" id="api-key-input" placeholder="sk-or-... or AIza..." style="margin-top: 6px;" />
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+            <small style="color: var(--text-muted); font-size: 11px;">If left blank, responses are synthesized directly from the local RAG vector base.</small>
+            <button type="button" id="toggle-key-visibility-btn" style="background: transparent; border: none; color: var(--accent-cyan); cursor: pointer; font-size: 11px; font-weight: 600;">Show Key</button>
+          </div>
         </div>
         <div class="form-group">
           <label>System Persona Conditioning</label>
@@ -257,31 +257,35 @@
       <div class="modal-header">
         <div class="modal-title-wrap">
           <span class="modal-icon">🎓</span>
-          <h3>NexusAI &bull; ISE Chatbot Academic Mapping</h3>
+          <h3>NexusAI &bull; ISE Chatbot Academic Mapping with RAG</h3>
         </div>
         <button class="modal-close-btn" id="close-info-btn">&times;</button>
       </div>
       <div class="modal-body info-body">
         <p class="info-intro">This system was designed and built by <strong>Avadhut Chakradeo</strong> to demonstrate practical implementations of the Information Science & Engineering curriculum topics:</p>
         <div class="topic-pill-list">
+          <span class="topic-pill">Retrieval-Augmented Generation (ChromaDB RAG)</span>
+          <span class="topic-pill">Cosine Vector Semantic Search</span>
           <span class="topic-pill">Conversational AI & Client-Server Pipeline</span>
           <span class="topic-pill">Multi-Turn Context & Session Memory</span>
           <span class="topic-pill">Natural Language Processing (Tokenization & Embeddings)</span>
           <span class="topic-pill">Sequence Modeling: RNNs &rarr; LSTMs &rarr; Transformers</span>
           <span class="topic-pill">Multi-Head Self-Attention In-Context Reasoning</span>
           <span class="topic-pill">Real-Time Asynchronous Token Streaming</span>
-          <span class="topic-pill">OpenAI / OpenRouter API Standards Interoperability</span>
           <span class="topic-pill">Ethical Safeguards & Data Privacy Isolation</span>
         </div>
         <div class="info-details">
+          <strong>RAG Vector Engine:</strong> ChromaDB with Cosine Metric Embedding Vector Space<br>
           <strong>Backend Architecture:</strong> FastAPI Asynchronous ASGI Server with Server-Sent Events (SSE)<br>
-          <strong>Inference Core:</strong> OpenRouter Multi-Model Cloud Engine with Free-Tier Allocation<br>
+          <strong>Cloud / Web Access:</strong> Client-side Direct RAG Knowledge Search & Hosted GitHub Pages Portal<br>
           <strong>Presentation:</strong> Responsive Cyber-Glassmorphism with KaTeX Math & Tokyo-Night Code Highlighting
         </div>
       </div>
     </div>
   </div>
 
+  <!-- RAG Client Knowledge Script -->
+  <script src="./static/js/rag_client.js"></script>
   <script src="./static/js/portal.js"></script>
 </body>
 </html>

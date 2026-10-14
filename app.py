@@ -21,8 +21,9 @@ if ENV_PATH.exists():
 
 import database
 import gemini_service
+import rag_service
 
-app = FastAPI(title="NexusAI - Conversational Intelligence Platform (ISE Project)")
+app = FastAPI(title="NexusAI - Conversational Intelligence Platform (ISE Project with RAG)")
 
 STATIC_DIR = BASE_DIR / "static"
 UPLOADS_DIR = STATIC_DIR / "uploads"
@@ -31,8 +32,9 @@ UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
-# Initialize Database tables
+# Initialize Database tables and RAG collection
 database.init_db()
+rag_service.get_rag_collection()
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
@@ -78,6 +80,15 @@ async def update_session(session_id: str, data: dict):
             database.update_session_settings(session_id, si, t, p)
     return {"status": "updated"}
 
+@app.post("/api/rag/search")
+async def rag_search(data: dict):
+    query = data.get("query", "").strip()
+    top_k = int(data.get("top_k", 2))
+    if not query:
+        raise HTTPException(status_code=400, detail="Query string is required")
+    results = rag_service.retrieve_rag_context(query, top_k=top_k)
+    return {"query": query, "chunks": results}
+
 @app.post("/api/upload")
 async def upload_file(file: UploadFile = File(...)):
     ext = Path(file.filename).suffix.lower()
@@ -105,7 +116,8 @@ async def chat_stream(data: dict):
     user_prompt = data.get("prompt", "").strip()
     image_url = data.get("image_url", "")
     api_key = data.get("api_key", "").strip() or None
-    model_name = data.get("model", "gemini-3.5-flash")
+    model_name = data.get("model", "apodex/apodex-1.1-mini:free")
+    enable_rag = data.get("enable_rag", True)
 
     if not session_id:
         raise HTTPException(status_code=400, detail="session_id is required")
@@ -126,7 +138,7 @@ async def chat_stream(data: dict):
         database.update_session_title(session_id, new_title)
 
     # Build history context
-    history_for_gemini = []
+    history_for_model = []
     for msg in existing_messages:
         item = {
             "role": msg["role"],
@@ -138,13 +150,7 @@ async def chat_stream(data: dict):
             if full_path.exists():
                 with open(full_path, "rb") as f:
                     item["image_bytes"] = f.read()
-                ext = full_path.suffix.lower()
-                mime = "image/jpeg"
-                if ext == ".png": mime = "image/png"
-                elif ext == ".webp": mime = "image/webp"
-                elif ext == ".gif": mime = "image/gif"
-                item["image_mime"] = mime
-        history_for_gemini.append(item)
+        history_for_model.append(item)
 
     system_instruction = sess.get("system_instruction", "")
     temperature = sess.get("temperature", 0.7)
@@ -154,12 +160,13 @@ async def chat_stream(data: dict):
         accumulated_text = ""
         try:
             stream = gemini_service.generate_chat_stream_sync(
-                messages=history_for_gemini,
+                messages=history_for_model,
                 model_name=model_name,
                 system_instruction=system_instruction,
                 temperature=temperature,
                 top_p=top_p,
-                api_key=api_key
+                api_key=api_key,
+                enable_rag=enable_rag
             )
             for chunk in stream:
                 accumulated_text += chunk

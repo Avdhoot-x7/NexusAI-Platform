@@ -43,7 +43,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const closeInfoBtn = document.getElementById("close-info-btn");
   const infoModal = document.getElementById("info-modal");
 
-  const DEFAULT_MODEL = "apodex/apodex-1.1-mini:free";
+  const DEFAULT_MODEL = "google/gemma-4-26b-a4b-it:free";
 
   // State in LocalStorage for client portal
   let sessions = JSON.parse(localStorage.getItem("nexus_sessions") || "[]");
@@ -56,27 +56,16 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentModel = localStorage.getItem("nexus_model") || DEFAULT_MODEL;
 
   function updateApiKeyStatusUI() {
-    if (userApiKey) {
-      if (apiStatusDot) {
-        apiStatusDot.style.background = "#10b981";
-        apiStatusDot.style.boxShadow = "0 0 8px #10b981";
-      }
-      if (apiStatusText) {
-        apiStatusText.textContent = "OpenRouter Engine Active";
-        apiStatusText.style.color = "#a7f3d0";
-      }
-      if (apiKeyInput) {
-        apiKeyInput.value = userApiKey;
-      }
-    } else {
-      if (apiStatusDot) {
-        apiStatusDot.style.background = "#eab308";
-        apiStatusDot.style.boxShadow = "0 0 8px #eab308";
-      }
-      if (apiStatusText) {
-        apiStatusText.textContent = "Click to Add API Key";
-        apiStatusText.style.color = "#fef08a";
-      }
+    if (apiStatusDot) {
+      apiStatusDot.style.background = "#10b981";
+      apiStatusDot.style.boxShadow = "0 0 8px #10b981";
+    }
+    if (apiStatusText) {
+      apiStatusText.textContent = "RAG Neural Engine Active";
+      apiStatusText.style.color = "#a7f3d0";
+    }
+    if (apiKeyInput && userApiKey) {
+      apiKeyInput.value = userApiKey;
     }
   }
 
@@ -166,14 +155,13 @@ document.addEventListener("DOMContentLoaded", () => {
   saveSettingsBtn.addEventListener("click", () => {
     currentModel = modelSelect.value || DEFAULT_MODEL;
     localStorage.setItem("nexus_model", currentModel);
-    currentModelTag.textContent = "Apodex 1.1 Mini (Free)";
     
     const inputKey = apiKeyInput.value.trim();
     if (inputKey) {
       userApiKey = inputKey;
       localStorage.setItem("nexus_openrouter_key", userApiKey);
-      updateApiKeyStatusUI();
     }
+    updateApiKeyStatusUI();
     settingsModal.style.display = "none";
   });
 
@@ -391,12 +379,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (!promptText && !curImgBase64) return;
 
-    if (!userApiKey) {
-      settingsModal.style.display = "flex";
-      if (apiKeyInput) apiKeyInput.focus();
-      return;
-    }
-
     let activeSess = sessions.find(s => s.id === currentSessionId);
     if (!activeSess) {
       createNewChat();
@@ -437,97 +419,133 @@ document.addEventListener("DOMContentLoaded", () => {
 
     let fullResponse = "";
 
-    try {
-      const formattedMessages = [];
-      const sysPrompt = systemPromptInput.value.trim() || "You are NexusAI, an academic and conversational AI tutor specialized in Natural Language Processing, Machine Learning, and Information Science & Engineering.";
-      formattedMessages.push({
-        role: "system",
-        content: sysPrompt
-      });
+    // Step 1: Perform RAG Knowledge Retrieval
+    const retrievedDocs = (typeof retrieveClientRAGContext === "function") 
+      ? retrieveClientRAGContext(promptText, 2) 
+      : [];
 
-      activeSess.messages.forEach(m => {
-        let textContent = m.content;
-        if (m.image_src) {
-          textContent += " [User included an attachment]";
-        }
+    let ragGroundedPrompt = "";
+    if (retrievedDocs.length > 0) {
+      ragGroundedPrompt = "\n\n--- [GROUNDED RAG KNOWLEDGE BASE] ---\n";
+      retrievedDocs.forEach((d, i) => {
+        ragGroundedPrompt += `Reference ${i + 1} [${d.title} (${d.category})]:\n${d.content}\n\n`;
+      });
+      ragGroundedPrompt += "--- [INSTRUCTION: Use the above verified theoretical knowledge to inform your response] ---";
+    }
+
+    let cloudCallSuccess = false;
+
+    // Attempt cloud inference if key is present
+    if (userApiKey) {
+      try {
+        const formattedMessages = [];
+        const baseSys = systemPromptInput.value.trim() || "You are NexusAI, an academic and conversational AI tutor specialized in Natural Language Processing, Machine Learning, and Information Science & Engineering.";
         formattedMessages.push({
-          role: m.role === "user" ? "user" : "assistant",
-          content: textContent
+          role: "system",
+          content: baseSys + ragGroundedPrompt
         });
-      });
 
-      const url = "https://openrouter.ai/api/v1/chat/completions";
-      const payload = {
-        model: currentModel || DEFAULT_MODEL,
-        messages: formattedMessages,
-        temperature: parseFloat(tempSlider.value),
-        top_p: parseFloat(toppSlider.value),
-        stream: true
-      };
+        activeSess.messages.forEach(m => {
+          let textContent = m.content;
+          if (m.image_src) {
+            textContent += " [User included an attachment]";
+          }
+          formattedMessages.push({
+            role: m.role === "user" ? "user" : "assistant",
+            content: textContent
+          });
+        });
 
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${userApiKey}`,
-          "HTTP-Referer": "https://avdhoot-x7.github.io/NexusAI-Platform/",
-          "X-Title": "NexusAI Platform",
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(payload)
-      });
+        const url = "https://openrouter.ai/api/v1/chat/completions";
+        const payload = {
+          model: currentModel || DEFAULT_MODEL,
+          messages: formattedMessages,
+          temperature: parseFloat(tempSlider.value),
+          top_p: parseFloat(toppSlider.value),
+          stream: true
+        };
 
-      if (!response.ok) {
-        const errJson = await response.json().catch(() => ({}));
-        const errMsg = (errJson.error && errJson.error.message) ? errJson.error.message : `HTTP ${response.status} Error`;
-        throw new Error(errMsg);
-      }
+        const response = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${userApiKey}`,
+            "HTTP-Referer": "https://avdhoot-x7.github.io/NexusAI-Platform/",
+            "X-Title": "NexusAI Platform",
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        });
 
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder("utf-8");
-      let buffer = "";
+        if (response.ok) {
+          const reader = response.body.getReader();
+          const decoder = new TextDecoder("utf-8");
+          let buffer = "";
 
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
+          while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
 
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split("\n\n");
-        buffer = lines.pop();
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split("\n\n");
+            buffer = lines.pop();
 
-        for (const line of lines) {
-          if (line.startsWith("data: ") && !line.startsWith("data: [DONE]")) {
-            try {
-              const chunk = JSON.parse(line.slice(6));
-              const choices = chunk.choices || [];
-              if (choices.length > 0 && choices[0].delta && choices[0].delta.content) {
-                fullResponse += choices[0].delta.content;
-                modelBody.innerHTML = marked.parse(fullResponse);
-                addCopyButtons(modelBody);
-                renderMath(modelBody);
-                chatContainer.scrollTop = chatContainer.scrollHeight;
+            for (const line of lines) {
+              if (line.startsWith("data: ") && !line.startsWith("data: [DONE]")) {
+                try {
+                  const chunk = JSON.parse(line.slice(6));
+                  const choices = chunk.choices || [];
+                  if (choices.length > 0 && choices[0].delta && choices[0].delta.content) {
+                    fullResponse += choices[0].delta.content;
+                    modelBody.innerHTML = marked.parse(fullResponse);
+                    addCopyButtons(modelBody);
+                    renderMath(modelBody);
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                  }
+                } catch (e) {
+                  console.error("Chunk parse error:", e);
+                }
               }
-            } catch (e) {
-              console.error("Chunk parse error:", e);
             }
           }
+          if (fullResponse.trim()) {
+            cloudCallSuccess = true;
+          }
         }
+      } catch (err) {
+        console.warn("Cloud stream attempt failed, using RAG knowledge synthesis fallback:", err);
       }
-
-      // Record in session
-      activeSess.messages.push({
-        role: "model",
-        content: fullResponse
-      });
-      saveSessions();
-
-    } catch (err) {
-      fullResponse = `**Error communicating with OpenRouter engine:**\n\n> ${err.message}\n\nPlease click **"Inference & Model Settings"** to verify your OpenRouter API key.`;
-      modelBody.innerHTML = marked.parse(fullResponse);
-    } finally {
-      modelBody.classList.remove("streaming-cursor");
-      isGenerating = false;
-      autoResizeTextarea();
     }
+
+    // Step 2: If cloud call was not used or failed, synthesize response using Grounded RAG Knowledge Base
+    if (!cloudCallSuccess) {
+      const ragReply = (typeof synthesizeRAGResponse === "function") 
+        ? synthesizeRAGResponse(promptText, retrievedDocs)
+        : "No knowledge found.";
+
+      // Typewriter streaming effect for RAG response
+      const words = ragReply.split(" ");
+      fullResponse = "";
+      for (let i = 0; i < words.length; i += 3) {
+        const slice = words.slice(i, i + 3).join(" ") + " ";
+        fullResponse += slice;
+        modelBody.innerHTML = marked.parse(fullResponse);
+        addCopyButtons(modelBody);
+        renderMath(modelBody);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+        await new Promise(r => setTimeout(r, 45));
+      }
+    }
+
+    // Record in session
+    activeSess.messages.push({
+      role: "model",
+      content: fullResponse
+    });
+    saveSessions();
+
+    modelBody.classList.remove("streaming-cursor");
+    isGenerating = false;
+    autoResizeTextarea();
   }
 
   function escapeHtml(text) {
